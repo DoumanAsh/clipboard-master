@@ -1,0 +1,27 @@
+[package]
+name = "clipboard-master"
+version = "0.1.0"
+authors = ["Douman <douman@gmx.se>"]
+categories = ["command-line-utilities"]
+
+homepage = "https://github.com/DoumanAsh/clipboard-master"
+repository = "https://github.com/DoumanAsh/clipboard-master"
+
+license = "MIT"
+readme = "README.md"
+keywords = ["clipboard"]
+
+[dependencies]
+clipboard-win = "^2"
+windows-win = "^1"
+winapi = "^0.2"
+
+[badges]
+appveyor = { repository = "https://github.com/DoumanAsh/clipboard-master", branch = "master", service = "github" }
+
+[profile.release]
+lto = true
+
+[[bin]]
+name = "cp-master"
+path = "src/main.rs"
