@@ -19,7 +19,7 @@ install:
 build: false
 
 test_script:
-  - cargo build --release
+  - cargo build
 
 before_deploy:
   # Generate artifacts for release
