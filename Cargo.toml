@@ -2,16 +2,16 @@
 name = "clipboard-master"
 version = "0.1.0"
 authors = ["Douman <douman@gmx.se>"]
-categories = ["command-line-utilities"]
+keywords = ["Windows", "winapi", "clipboard"]
+description = "Simple utility crate to monitor clipboard changes"
 
 homepage = "https://github.com/DoumanAsh/clipboard-master"
 repository = "https://github.com/DoumanAsh/clipboard-master"
 
 license = "MIT"
 readme = "README.md"
-keywords = ["clipboard"]
 
-[dependencies]
+[target.'cfg(windows)'.dependencies]
 clipboard-win = "^2"
 windows-win = "^1"
 winapi = "^0.2"
