@@ -16,8 +16,15 @@
 //! ## Usage
 //!
 //! ```
-//! ./cp-master
+//! USAGE: cp-master [flags]
+//!
+//! Starts monitoring Clipboard changes
+//!
+//! Flags:
+//!   -h, --help    - Prints this message.
+//!   -m, --magnet  - Starts torrent client when detecting magnet URI.
 //! ```
+
 extern crate clipboard_master;
 extern crate clipboard_win;
 
@@ -35,14 +42,39 @@ use clipboard_win::{
 };
 
 mod process;
+mod cli;
 
-fn callback() -> CallbackResult {
-    match Clipboard::new() {
-        Ok(clip) => {
-            if Clipboard::is_format_avail(formats::CF_UNICODETEXT) {
+fn error_callback(error: io::Error) -> CallbackResult {
+    println!("Error: {}", error);
+    CallbackResult::Next
+}
+
+fn main() {
+    let args = match cli::Parser::new() {
+        Ok(args) => args,
+        Err(error) => {
+            println!("{}", error);
+            exit(1);
+        }
+    };
+
+    if args.flags.help {
+        println!("{}", args.usage());
+        return;
+    }
+
+    let callback = | | {
+        const RES: CallbackResult = CallbackResult::Next;
+
+        if !Clipboard::is_format_avail(formats::CF_UNICODETEXT) {
+            return RES;
+        }
+
+        match Clipboard::new() {
+            Ok(clip) => {
                 match clip.get_string() {
                     Ok(content) => {
-                        if process::magnet::is_applicable(&content) {
+                        if args.flags.magnet && process::magnet::is_applicable(&content) {
                             println!(">>>Run torrent client on uri: {}", &content);
                             process::magnet::run(&content);
                         }
@@ -60,24 +92,15 @@ fn callback() -> CallbackResult {
                     }
                 }
             }
+            Err(error) => {
+                println!("Failed to open clipboard. Error: {}", error);
+            }
         }
-        Err(error) => {
-            println!("Failed to open clipboard. Error: {}", error);
-        }
-    }
 
-    CallbackResult::Next
-}
+        RES
+    };
 
-fn error_callback(error: io::Error) -> CallbackResult {
-    println!("Error: {}", error);
-    CallbackResult::Next
-}
-
-fn main() {
-    let result = Master::new(callback, error_callback).run();
-
-    match result {
+    match Master::new(callback, error_callback).run() {
         Ok(_) => (),
         Err(error) => {
             println!("Aborted. Error: {}", error);

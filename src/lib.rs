@@ -2,6 +2,24 @@
 //! Clipboard master
 //!
 //! Provides simple way to track updates of clipboard.
+//!
+//! ## Example:
+//!
+//! ```rust
+//! fn callback() -> CallbackResult {
+//!     println!("Clipboard change happened!");
+//!     CallbackResult::Next
+//! }
+//!
+//! fn error_callback(error: io::Error) -> CallbackResult {
+//!     println!("Error: {}", error);
+//!     CallbackResult::Next
+//! }
+//!
+//! fn main() {
+//!     let _ = Master::new(callback, error_callback).run()
+//! }
+//! ```
 extern crate windows_win;
 extern crate clipboard_win;
 extern crate winapi;
