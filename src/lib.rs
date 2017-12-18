@@ -33,18 +33,10 @@ use windows_win::{
     Messages
 };
 
-use winapi::windef::{
-    HWND
+use winapi::um::winuser::{
+    AddClipboardFormatListener,
+    RemoveClipboardFormatListener
 };
-
-use std::os::raw::{
-    c_int
-};
-
-extern "system" {
-    fn AddClipboardFormatListener(hWnd: HWND) -> c_int;
-    fn RemoveClipboardFormatListener(hWnd: HWND) -> c_int;
-}
 
 ///Possible return values of callback.
 pub enum CallbackResult {
