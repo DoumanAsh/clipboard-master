@@ -5,7 +5,13 @@
 //!
 //! ## Example:
 //!
-//! ```rust
+//! ```rust,no_run
+//! extern crate clipboard_master;
+//!
+//! use clipboard_master::{Master, CallbackResult};
+//!
+//! use std::io;
+//!
 //! fn callback() -> CallbackResult {
 //!     println!("Clipboard change happened!");
 //!     CallbackResult::Next
@@ -17,7 +23,7 @@
 //! }
 //!
 //! fn main() {
-//!     let _ = Master::new(callback, error_callback).run()
+//!     let _ = Master::new(callback, error_callback).run();
 //! }
 //! ```
 extern crate windows_win;
@@ -86,13 +92,18 @@ impl<OK, ERR> Master<OK, ERR>
             };
         }
 
+        let mut result = Ok(());
+
         for msg in Messages::new().window(Some(window.inner())).low(Some(797)).high(Some(797)) {
             match msg {
                 Ok(_) => {
                     match (self.cb_ok)() {
                         CallbackResult::Next => (),
                         CallbackResult::Stop => break,
-                        CallbackResult::StopWithError(error) => return Err(error),
+                        CallbackResult::StopWithError(error) => {
+                            result = Err(error);
+                            break;
+                        }
 
                     }
                 },
@@ -100,7 +111,10 @@ impl<OK, ERR> Master<OK, ERR>
                     match (self.cb_err)(error) {
                         CallbackResult::Next => (),
                         CallbackResult::Stop => break,
-                        CallbackResult::StopWithError(error) => return Err(error),
+                        CallbackResult::StopWithError(error) => {
+                            result = Err(error);
+                            break;
+                        }
                     }
                 }
             }
@@ -110,6 +124,6 @@ impl<OK, ERR> Master<OK, ERR>
             RemoveClipboardFormatListener(window.inner());
         }
 
-        Ok(())
+        result
     }
 }
