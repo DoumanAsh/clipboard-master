@@ -12,18 +12,28 @@ This project exports `Master` struct that provides simple way to handle clipboar
 
 Example:
 ```rust
-fn callback() -> CallbackResult {
-    println!("Clipboard change happened!");
-    CallbackResult::Next
-}
+extern crate clipboard_master;
 
-fn error_callback(error: io::Error) -> CallbackResult {
-    println!("Error: {}", error);
-    CallbackResult::Next
+use clipboard_master::{Master, ClipboardHandler, CallbackResult};
+
+use std::io;
+
+struct Handler;
+
+impl ClipboardHandler for Handler {
+    fn on_clipboard_change(&mut self) -> CallbackResult {
+        println!("Clipboard change happened!");
+        CallbackResult::Next
+    }
+
+    fn on_clipboard_error(&mut self, error: io::Error) -> CallbackResult {
+        eprintln!("Error: {}", error);
+        CallbackResult::Next
+    }
 }
 
 fn main() {
-    let _ = Master::new(callback, error_callback).run()
+    let _ = Master::new(Handler).run();
 }
 ```
 

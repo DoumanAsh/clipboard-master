@@ -33,6 +33,7 @@ use std::process::exit;
 
 use clipboard_master::{
     Master,
+    ClipboardHandler,
     CallbackResult,
 };
 
@@ -44,26 +45,12 @@ use clipboard_win::{
 mod process;
 mod cli;
 
-fn error_callback(error: io::Error) -> CallbackResult {
-    println!("Error: {}", error);
-    CallbackResult::Next
+pub struct Handler {
+    args: cli::Parser
 }
 
-fn main() {
-    let args = match cli::Parser::new() {
-        Ok(args) => args,
-        Err(error) => {
-            println!("{}", error);
-            exit(1);
-        }
-    };
-
-    if args.flags.help {
-        println!("{}", args.usage());
-        return;
-    }
-
-    let callback = | | {
+impl ClipboardHandler for Handler {
+    fn on_clipboard_change(&mut self) -> CallbackResult {
         const RES: CallbackResult = CallbackResult::Next;
 
         if !Clipboard::is_format_avail(formats::CF_UNICODETEXT) {
@@ -74,7 +61,7 @@ fn main() {
             Ok(clip) => {
                 match clip.get_string() {
                     Ok(content) => {
-                        if args.flags.magnet && process::magnet::is_applicable(&content) {
+                        if self.args.flags.magnet && process::magnet::is_applicable(&content) {
                             println!(">>>Run torrent client on uri: {}", &content);
                             process::magnet::run(&content);
                         }
@@ -98,9 +85,33 @@ fn main() {
         }
 
         RES
+    }
+
+    fn on_clipboard_error(&mut self, error: io::Error) -> CallbackResult {
+        eprintln!("Error: {}", error);
+        CallbackResult::Next
+    }
+}
+
+fn main() {
+    let args = match cli::Parser::new() {
+        Ok(args) => args,
+        Err(error) => {
+            println!("{}", error);
+            exit(1);
+        }
     };
 
-    match Master::new(callback, error_callback).run() {
+    if args.flags.help {
+        println!("{}", args.usage());
+        return;
+    }
+
+    let handler = Handler {
+        args,
+    };
+
+    match Master::new(handler).run() {
         Ok(_) => (),
         Err(error) => {
             println!("Aborted. Error: {}", error);

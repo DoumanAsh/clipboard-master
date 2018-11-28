@@ -8,22 +8,26 @@
 //! ```rust,no_run
 //! extern crate clipboard_master;
 //!
-//! use clipboard_master::{Master, CallbackResult};
+//! use clipboard_master::{Master, ClipboardHandler, CallbackResult};
 //!
 //! use std::io;
 //!
-//! fn callback() -> CallbackResult {
-//!     println!("Clipboard change happened!");
-//!     CallbackResult::Next
-//! }
+//! struct Handler;
 //!
-//! fn error_callback(error: io::Error) -> CallbackResult {
-//!     println!("Error: {}", error);
-//!     CallbackResult::Next
+//! impl ClipboardHandler for Handler {
+//!     fn on_clipboard_change(&mut self) -> CallbackResult {
+//!         println!("Clipboard change happened!");
+//!         CallbackResult::Next
+//!     }
+//!
+//!     fn on_clipboard_error(&mut self, error: io::Error) -> CallbackResult {
+//!         eprintln!("Error: {}", error);
+//!         CallbackResult::Next
+//!     }
 //! }
 //!
 //! fn main() {
-//!     let _ = Master::new(callback, error_callback).run();
+//!     let _ = Master::new(Handler).run();
 //! }
 //! ```
 extern crate windows_win;
@@ -31,7 +35,6 @@ extern crate clipboard_win;
 extern crate winapi;
 
 use std::io;
-use std::ops::FnMut;
 
 use windows_win::{
     raw,
@@ -44,6 +47,16 @@ use winapi::um::winuser::{
     RemoveClipboardFormatListener
 };
 
+///Describes Clipboard handler
+pub trait ClipboardHandler {
+    ///Callback to call on clipboard change.
+    fn on_clipboard_change(&mut self) -> CallbackResult;
+    ///Callback to call on when error happens in master.
+    fn on_clipboard_error(&mut self, error: io::Error) -> CallbackResult {
+        CallbackResult::StopWithError(error)
+    }
+}
+
 ///Possible return values of callback.
 pub enum CallbackResult {
     ///Wait for next clipboard change.
@@ -54,31 +67,46 @@ pub enum CallbackResult {
     StopWithError(io::Error)
 }
 
-///Default error callback that stops Master and propagates error in return value of `run()`
-pub fn default_error(error: io::Error) -> CallbackResult {
-    CallbackResult::StopWithError(error)
-}
-
 ///Clipboard master.
 ///
 ///Tracks changes of clipboard and invokes corresponding callbacks.
-pub struct Master<OK, ERR>
-    where OK: FnMut() -> CallbackResult,
-          ERR: FnMut(io::Error) -> CallbackResult
-{
-    cb_ok: OK,
-    cb_err: ERR
+pub struct Master<H> {
+    handler: H
 }
 
-impl<OK, ERR> Master<OK, ERR>
-    where OK: FnMut() -> CallbackResult,
-          ERR: FnMut(io::Error) -> CallbackResult
-{
+///Clipboard listener guard.
+///
+///On drop unsubscribes window from listening on clipboard changes
+pub struct ClipboardListener(winapi::shared::windef::HWND);
+
+impl ClipboardListener {
+    #[inline]
+    ///Subscribes window to clipboard changes.
+    pub fn new(window: &Window) -> io::Result<Self> {
+        let window = window.inner();
+        unsafe {
+            if AddClipboardFormatListener(window) != 1 {
+                Err(io::Error::last_os_error())
+            } else {
+                Ok(ClipboardListener(window))
+            }
+        }
+    }
+}
+
+impl Drop for ClipboardListener {
+    fn drop(&mut self) {
+        unsafe {
+            RemoveClipboardFormatListener(self.0);
+        }
+    }
+}
+
+impl<H: ClipboardHandler> Master<H> {
     ///Creates new instance.
-    pub fn new(cb: OK, cb_err: ERR) -> Self {
+    pub fn new(handler: H) -> Self {
         Master {
-            cb_ok: cb,
-            cb_err: cb_err
+            handler
         }
     }
 
@@ -86,18 +114,14 @@ impl<OK, ERR> Master<OK, ERR>
     pub fn run(&mut self) -> io::Result<()> {
         let window = Window::from_builder(raw::window::Builder::new().class_name("STATIC").parent_message())?;
 
-        unsafe {
-            if AddClipboardFormatListener(window.inner()) != 1 {
-                return Err(io::Error::last_os_error());
-            };
-        }
+        let _guard = ClipboardListener::new(&window)?;
 
         let mut result = Ok(());
 
         for msg in Messages::new().window(Some(window.inner())).low(Some(797)).high(Some(797)) {
             match msg {
                 Ok(_) => {
-                    match (self.cb_ok)() {
+                    match self.handler.on_clipboard_change() {
                         CallbackResult::Next => (),
                         CallbackResult::Stop => break,
                         CallbackResult::StopWithError(error) => {
@@ -108,7 +132,7 @@ impl<OK, ERR> Master<OK, ERR>
                     }
                 },
                 Err(error) => {
-                    match (self.cb_err)(error) {
+                    match self.handler.on_clipboard_error(error) {
                         CallbackResult::Next => (),
                         CallbackResult::Stop => break,
                         CallbackResult::StopWithError(error) => {
@@ -118,10 +142,6 @@ impl<OK, ERR> Master<OK, ERR>
                     }
                 }
             }
-        }
-
-        unsafe {
-            RemoveClipboardFormatListener(window.inner());
         }
 
         result
