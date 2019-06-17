@@ -1,14 +1,16 @@
-environment:
-  global:
-    PROJECT_NAME: clipboard-master
-  matrix:
-    - TARGET: i686-pc-windows-msvc
-      CHANNEL: stable
-    - TARGET: x86_64-pc-windows-msvc
-      CHANNEL: stable
+branches:
+  only:
+    - master
+  except:
+    - gh-pages
 
-# Install Rust and Cargo
-# (Based on from https://github.com/rust-lang/libc/blob/master/appveyor.yml)
+environment:
+  matrix:
+  - TARGET: i686-pc-windows-msvc
+    CHANNEL: beta
+  - TARGET: x86_64-pc-windows-msvc
+    CHANNEL: beta
+
 install:
   - curl -sSf -o rustup-init.exe https://win.rustup.rs
   - rustup-init.exe --default-host %TARGET% --default-toolchain %CHANNEL% -y
@@ -19,40 +21,4 @@ install:
 build: false
 
 test_script:
-  - cargo build
-
-before_deploy:
-  # Generate artifacts for release
-  - cargo build --release
-  - mkdir staging
-  - copy target\release\*.exe staging
-  - mkdir staging\debug
-  - copy target\debug\*.exe staging\debug
-  - cd staging
-  - 7z a ../%PROJECT_NAME%-%APPVEYOR_REPO_TAG_NAME%-%TARGET%.zip *.exe
-  - appveyor PushArtifact ../%PROJECT_NAME%-%APPVEYOR_REPO_TAG_NAME%-%TARGET%.zip
-  - cd debug/
-  - 7z a ../../%PROJECT_NAME%-%APPVEYOR_REPO_TAG_NAME%-%TARGET%-debug.zip *.exe
-  - appveyor PushArtifact ../../%PROJECT_NAME%-%APPVEYOR_REPO_TAG_NAME%-%TARGET%-debug.zip
-
-deploy:
-  description: 'Windows release'
-  # All the zipped artifacts will be deployed
-  artifact: /.*\.zip/
-  # - Go to 'https://github.com/settings/tokens/new' and generate a Token with only the
-  # `public_repo` scope enabled
-  # - Then go to 'https://ci.appveyor.com/tools/encrypt' and enter the newly generated token.
-  # - Enter the "encrypted value" below
-  auth_token:
-    secure: Jn3kh7c4SMFcIjYM7rNg+JG1g6zIyLt0PIKnkTvdqVfvsBPDQsiFxc87qYtjV2PH
-  provider: GitHub
-  # deploy when a new tag is pushed and only on the stable channel
-  on:
-    # channel to use to produce the release artifacts
-    # NOTE make sure you only release *once* per target
-    CHANNEL: stable
-    appveyor_repo_tag: true
-
-branches:
-  only:
-    - master
+  - cargo test

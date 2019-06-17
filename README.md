@@ -4,7 +4,7 @@
 [![Crates.io](https://img.shields.io/crates/v/clipboard-master.svg)](https://crates.io/crates/clipboard-master)
 [![Docs.rs](https://docs.rs/clipboard-master/badge.svg)](https://docs.rs/clipboard-master/*/x86_64-pc-windows-msvc/clipboard_master/)
 
-Clipboard monitoring utilities.
+Clipboard monitoring library.
 
 ## Clipboard Master Library
 
@@ -12,8 +12,6 @@ This project exports `Master` struct that provides simple way to handle clipboar
 
 Example:
 ```rust
-extern crate clipboard_master;
-
 use clipboard_master::{Master, ClipboardHandler, CallbackResult};
 
 use std::io;
@@ -35,23 +33,4 @@ impl ClipboardHandler for Handler {
 fn main() {
     let _ = Master::new(Handler).run();
 }
-```
-
-## Clipboard Master CLI
-
-Simple monitor of clipboard content.
-Following actions are performed:
-- Add magnet link to default torrent client.
-- Trim clipboard content
-
-### Usage
-
-```
-USAGE: cp-master [flags]
-
-Starts monitoring Clipboard changes
-
-Flags:
-  -h, --help    - Prints this message.
-  -m, --magnet  - Starts torrent client when detecting magnet URI.
 ```

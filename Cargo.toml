@@ -1,6 +1,6 @@
 [package]
 name = "clipboard-master"
-version = "2.0.0"
+version = "3.0.0"
 authors = ["Douman <douman@gmx.se>"]
 keywords = ["Windows", "winapi", "clipboard"]
 description = "Simple utility crate to monitor clipboard changes"
@@ -11,9 +11,9 @@ documentation = "https://docs.rs/clipboard-master/*/x86_64-pc-windows-msvc/clipb
 
 license = "MIT"
 readme = "README.md"
+edition = "2018"
 
 [target.'cfg(windows)'.dependencies]
-clipboard-win = "2"
 windows-win = "2"
 
 [target.'cfg(windows)'.dependencies.winapi]
@@ -25,7 +25,3 @@ features = [
 
 [badges]
 appveyor = { repository = "DoumanAsh/clipboard-master"}
-
-[[bin]]
-name = "cp-master"
-path = "src/main.rs"

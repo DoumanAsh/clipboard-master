@@ -30,10 +30,6 @@
 //!     let _ = Master::new(Handler).run();
 //! }
 //! ```
-extern crate windows_win;
-extern crate clipboard_win;
-extern crate winapi;
-
 use std::io;
 
 use windows_win::{
