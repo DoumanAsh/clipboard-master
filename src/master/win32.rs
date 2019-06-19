@@ -42,13 +42,6 @@ impl Drop for ClipboardListener {
 }
 
 impl<H: ClipboardHandler> Master<H> {
-    ///Creates new instance.
-    pub fn new(handler: H) -> Self {
-        Master {
-            handler
-        }
-    }
-
     ///Starts Master by creating dummy window and listening clipboard update messages.
     pub fn run(&mut self) -> io::Result<()> {
         let window = Window::from_builder(raw::window::Builder::new().class_name("STATIC").parent_message())?;

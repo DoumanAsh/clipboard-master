@@ -63,3 +63,12 @@ pub enum CallbackResult {
 pub struct Master<H> {
     handler: H
 }
+
+impl<H: ClipboardHandler> Master<H> {
+    ///Creates new instance.
+    pub fn new(handler: H) -> Self {
+        Master {
+            handler
+        }
+    }
+}
