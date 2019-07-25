@@ -6,6 +6,10 @@
 
 Clipboard monitoring library.
 
+## Supported platforms
+
+- Windows - uses dummy window to receive messages when clipboard changes;
+
 ## Clipboard Master Library
 
 This project exports `Master` struct that provides simple way to handle clipboard updates.
