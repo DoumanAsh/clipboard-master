@@ -8,7 +8,7 @@ impl<H: ClipboardHandler> Master<H> {
         let clipboard = x11_clipboard::Clipboard::new().unwrap();
 
         loop {
-            match clipboard.load_wait(clipboard.getter.atoms.primary, x11_clipboard::xcb::xproto::ATOM_ANY, clipboard.getter.atoms.property) {
+            match clipboard.load_wait(clipboard.getter.atoms.primary, clipboard.getter.atoms.utf8_string, clipboard.getter.atoms.property) {
                 Ok(_) => match self.handler.on_clipboard_change() {
                     CallbackResult::Next => (),
                     CallbackResult::Stop => break,
