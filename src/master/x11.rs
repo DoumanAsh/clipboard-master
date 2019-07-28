@@ -2,7 +2,7 @@ use std::io;
 use crate::{ClipboardHandler, CallbackResult, Master};
 
 impl<H: ClipboardHandler> Master<H> {
-    ///Starts Master by creating dummy window and listening clipboard update messages.
+    ///Starts Master by waiting for any change
     pub fn run(&mut self) -> io::Result<()> {
         let mut result = Ok(());
         let clipboard = x11_clipboard::Clipboard::new().unwrap();

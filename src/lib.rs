@@ -41,6 +41,14 @@ pub trait ClipboardHandler {
     fn on_clipboard_error(&mut self, error: io::Error) -> CallbackResult {
         CallbackResult::StopWithError(error)
     }
+
+    #[inline(always)]
+    ///Returns sleep interval for polling implementations (e.g. Mac).
+    ///
+    ///Default value is 500ms
+    fn sleep_interval(&self) -> core::time::Duration {
+        core::time::Duration::from_millis(500)
+    }
 }
 
 ///Possible return values of callback.

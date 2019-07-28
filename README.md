@@ -10,12 +10,14 @@ Clipboard monitoring library.
 
 - Windows - uses dummy window to receive messages when clipboard changes;
 - Linux - uses [x11_clipboard](https://github.com/quininer/x11-clipboard)
+- MacOS - uses polling via `NSPasteboard::changeCount` as there is no event notification.
 
 ## Clipboard Master Library
 
 This project exports `Master` struct that provides simple way to handle clipboard updates.
 
 Example:
+
 ```rust
 use clipboard_master::{Master, ClipboardHandler, CallbackResult};
 
