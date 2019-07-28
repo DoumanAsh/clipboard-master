@@ -7,7 +7,6 @@ description = "Simple utility crate to monitor clipboard changes"
 
 homepage = "https://github.com/DoumanAsh/clipboard-master"
 repository = "https://github.com/DoumanAsh/clipboard-master"
-documentation = "https://docs.rs/clipboard-master/*/x86_64-pc-windows-msvc/clipboard_master/"
 
 license = "MIT"
 readme = "README.md"
@@ -22,6 +21,9 @@ default-features = false
 features = [
     "winuser"
 ]
+
+[target.'cfg(all(unix, not(any(target_os="macos", target_os="android", target_os="emscripten"))))'.dependencies]
+x11-clipboard = "0.3"
 
 [badges]
 appveyor = { repository = "DoumanAsh/clipboard-master"}
