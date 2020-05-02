@@ -1,6 +1,6 @@
 # clipboard-master
 
-[![Build Status](https://dev.azure.com/DoumanAsh/clipboard-master/_apis/build/status/DoumanAsh.clipboard-master?branchName=master)](https://dev.azure.com/DoumanAsh/clipboard-master/_build/latest?definitionId=5&branchName=master)
+![](https://github.com/DoumanAsh/clipboard-master/workflows/Rust/badge.svg)
 [![Crates.io](https://img.shields.io/crates/v/clipboard-master.svg)](https://crates.io/crates/clipboard-master)
 [![Docs.rs](https://docs.rs/clipboard-master/badge.svg)](https://docs.rs/clipboard-master/*/x86_64-pc-windows-msvc/clipboard_master/)
 
