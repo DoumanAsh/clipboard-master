@@ -4,6 +4,9 @@ use crate::{ClipboardHandler, CallbackResult, Master};
 use objc::runtime::{Object, Class};
 use objc_id::{Id};
 
+#[link(name = "AppKit", kind = "framework")]
+extern "C" {}
+
 impl<H: ClipboardHandler> Master<H> {
     ///Starts Master by polling clipboard for change
     pub fn run(&mut self) -> io::Result<()> {
