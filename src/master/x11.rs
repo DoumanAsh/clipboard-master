@@ -17,7 +17,7 @@ impl<H: ClipboardHandler> Master<H> {
         xcb::xfixes::query_version(&clipboard.getter.connection, 5, 0);
 
         loop {
-            let selection = clipboard.getter.atoms.utf8_string;
+            let selection = clipboard.getter.atoms.clipboard;
 
             let screen = match clipboard.getter.connection.get_setup().roots().nth(clipboard.getter.screen as usize) {
                 Some(screen) => screen,
@@ -37,22 +37,16 @@ impl<H: ClipboardHandler> Master<H> {
                                                 xcb::xfixes::SELECTION_EVENT_MASK_SELECTION_CLIENT_CLOSE |
                                                 xcb::xfixes::SELECTION_EVENT_MASK_SELECTION_WINDOW_DESTROY);
             clipboard.getter.connection.flush();
-            let first_event = xfixes.first_event();
 
             loop {
-                let event = match clipboard.getter.connection.wait_for_event() {
-                    Some(event) => event,
+                match clipboard.getter.connection.wait_for_event() {
+                    Some(_) => {
+                        break
+                    },
                     None => {
                         continue
                     }
                 };
-
-                let rsp_type = event.response_type();
-
-                match rsp_type & !0x80 {
-                    xcb::SELECTION_NOTIFY | xcb::PROPERTY_NOTIFY => break,
-                    _ => (),
-                }
             };
 
             match self.handler.on_clipboard_change() {
