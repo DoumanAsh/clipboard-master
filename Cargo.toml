@@ -1,6 +1,6 @@
 [package]
 name = "clipboard-master"
-version = "3.1.1"
+version = "3.1.2"
 authors = ["Douman <douman@gmx.se>"]
 keywords = ["Windows", "winapi", "clipboard"]
 description = "Simple utility crate to monitor clipboard changes"
