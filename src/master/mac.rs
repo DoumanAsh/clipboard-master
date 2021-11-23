@@ -24,7 +24,7 @@ impl<H: ClipboardHandler> Master<H> {
 
         let pasteboard: Id<Object> = unsafe { Id::from_ptr(pasteboard) };
 
-        let mut prev_count = 0;
+        let mut prev_count = unsafe { msg_send![pasteboard, changeCount] };
         let mut result = Ok(());
 
         loop {
