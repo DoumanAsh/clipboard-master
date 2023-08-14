@@ -1,9 +1,48 @@
 use std::io;
-use crate::{ClipboardHandler, CallbackResult, Master};
+use crate::{ClipboardHandler, CallbackResult};
 
 use x11_clipboard::xcb;
 
+///Shutdown channel
+///
+///On drop requests shutdown to gracefully close clipboard listener as soon as possible.
+pub struct Shutdown {
+}
+
+impl Drop for Shutdown {
+    #[inline(always)]
+    fn drop(&mut self) {
+    }
+}
+
+///Clipboard master.
+///
+///Tracks changes of clipboard and invokes corresponding callbacks.
+///
+///# Platform notes:
+///
+///- On `windows` it creates dummy window that monitors each clipboard change message.
+pub struct Master<H> {
+    handler: H,
+}
+
 impl<H: ClipboardHandler> Master<H> {
+    #[inline(always)]
+    ///Creates new instance.
+    pub fn new(handler: H) -> io::Result<Self> {
+        Ok(Self {
+            handler,
+        })
+    }
+
+    #[inline(always)]
+    ///Creates shutdown channel.
+    pub fn shutdown_channel(&self) -> Shutdown {
+        Shutdown {
+        }
+    }
+
+
     ///Starts Master by waiting for any change
     pub fn run(&mut self) -> io::Result<()> {
         let mut result = Ok(());

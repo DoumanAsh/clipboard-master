@@ -26,12 +26,17 @@
 //! }
 //!
 //! fn main() {
-//!     let _ = Master::new(Handler).run();
+//!     let _ = Master::new(Handler).expect("create new monitor").run();
 //! }
 //! ```
+
+#![cfg_attr(feature = "cargo-clippy", allow(clippy::style))]
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 use std::io;
 
 mod master;
+pub use master::{Master, Shutdown};
 
 ///Describes Clipboard handler
 pub trait ClipboardHandler {
@@ -61,22 +66,9 @@ pub enum CallbackResult {
     StopWithError(io::Error)
 }
 
-///Clipboard master.
-///
-///Tracks changes of clipboard and invokes corresponding callbacks.
-///
-///# Platform notes:
-///
-///- On `windows` it creates dummy window that monitors each clipboard change message.
-pub struct Master<H> {
-    handler: H
-}
-
-impl<H: ClipboardHandler> Master<H> {
-    ///Creates new instance.
-    pub fn new(handler: H) -> Self {
-        Master {
-            handler
-        }
+impl Shutdown {
+    ///Signals shutdown
+    pub fn signal(self) {
+        drop(self);
     }
 }
