@@ -5,18 +5,20 @@ impl<H: ClipboardHandler> Master<H> {
     ///Starts Master by waiting for any change
     pub fn run(&mut self) -> io::Result<()> {
         let clipboard = x11_clipboard::Clipboard::new();
-        if let Err(error) = clipboard {
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                format!("Failed to initialize clipboard: {:?}", error),
-            ));
-        }
-        let clipboard = clipboard.unwrap();
+        let clipboard = match clipboard {
+            Ok(clipboard) => clipboard,
+            Err(error) => {
+                return Err(io::Error::new(
+                    io::ErrorKind::Other,
+                    format!("Failed to initialize clipboard: {:?}", error),
+                ))
+            }
+        };
 
         loop {
             let res = clipboard.load_wait(
                 clipboard.getter.atoms.clipboard,
-                clipboard.getter.atoms.utf8_string,
+                clipboard.getter.atoms.incr,
                 clipboard.getter.atoms.property,
             );
             if let Err(error) = res {
