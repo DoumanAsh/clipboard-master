@@ -38,6 +38,6 @@ impl ClipboardHandler for Handler {
 }
 
 fn main() {
-    let _ = Master::new(Handler).run();
+    let _ = Master::new(Handler).expect("Create master").run();
 }
 ```
