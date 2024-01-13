@@ -6,9 +6,8 @@ use windows_win::{
     Messages
 };
 
-use winapi::shared::windef::HWND;
-
-use winapi::um::winuser::{
+use windows_win::sys::{
+    HWND,
     AddClipboardFormatListener,
     RemoveClipboardFormatListener,
     PostMessageW,
@@ -81,7 +80,10 @@ impl<H: ClipboardHandler> Master<H> {
     #[inline(always)]
     ///Creates new instance.
     pub fn new(handler: H) -> io::Result<Self> {
-        let window = Window::from_builder(raw::window::Builder::new().class_name("STATIC").parent_message())?;
+        let window = match Window::from_builder(raw::window::Builder::new().class_name("STATIC").parent_message()) {
+            Ok(window) => window,
+            Err(error) => return Err(io::Error::from_raw_os_error(error.raw_code())),
+        };
 
         Ok(Self {
             handler,
@@ -126,7 +128,7 @@ impl<H: ClipboardHandler> Master<H> {
                     _ => panic!("Unexpected message"),
                 },
                 Err(error) => {
-                    match self.handler.on_clipboard_error(error) {
+                    match self.handler.on_clipboard_error(io::Error::from_raw_os_error(error.raw_code())) {
                         CallbackResult::Next => (),
                         CallbackResult::Stop => break,
                         CallbackResult::StopWithError(error) => {
