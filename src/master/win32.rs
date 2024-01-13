@@ -6,17 +6,41 @@ use windows_win::{
     Messages
 };
 
+use winapi::shared::windef::HWND;
+
 use winapi::um::winuser::{
     AddClipboardFormatListener,
-    RemoveClipboardFormatListener
+    RemoveClipboardFormatListener,
+    PostMessageW,
+    WM_CLIPBOARDUPDATE,
 };
 
-use crate::{ClipboardHandler, CallbackResult, Master};
+use crate::{ClipboardHandler, CallbackResult};
+
+const CLOSE_PARAM: isize = -1;
+
+///Shutdown channel
+///
+///On drop requests shutdown to gracefully close clipboard listener as soon as possible.
+pub struct Shutdown {
+    window: HWND,
+}
+
+unsafe impl Send for Shutdown {}
+
+impl Drop for Shutdown {
+    #[inline(always)]
+    fn drop(&mut self) {
+        unsafe {
+            PostMessageW(self.window, WM_CLIPBOARDUPDATE, 0, CLOSE_PARAM)
+        };
+    }
+}
 
 ///Clipboard listener guard.
 ///
 ///On drop unsubscribes window from listening on clipboard changes
-pub struct ClipboardListener(winapi::shared::windef::HWND);
+pub struct ClipboardListener(HWND);
 
 impl ClipboardListener {
     #[inline]
@@ -41,27 +65,65 @@ impl Drop for ClipboardListener {
     }
 }
 
+///Clipboard master.
+///
+///Tracks changes of clipboard and invokes corresponding callbacks.
+///
+///# Platform notes:
+///
+///- On `windows` it creates dummy window that monitors each clipboard change message.
+pub struct Master<H> {
+    handler: H,
+    window: Window,
+}
+
 impl<H: ClipboardHandler> Master<H> {
-    ///Starts Master by creating dummy window and listening clipboard update messages.
-    pub fn run(&mut self) -> io::Result<()> {
+    #[inline(always)]
+    ///Creates new instance.
+    pub fn new(handler: H) -> io::Result<Self> {
         let window = Window::from_builder(raw::window::Builder::new().class_name("STATIC").parent_message())?;
 
-        let _guard = ClipboardListener::new(&window)?;
+        Ok(Self {
+            handler,
+            window
+        })
+    }
+
+    #[inline(always)]
+    ///Creates shutdown channel.
+    pub fn shutdown_channel(&self) -> Shutdown {
+        Shutdown {
+            window: self.window.inner()
+        }
+    }
+
+    ///Starts Master by creating dummy window and listening clipboard update messages.
+    pub fn run(&mut self) -> io::Result<()> {
+        let _guard = ClipboardListener::new(&self.window)?;
 
         let mut result = Ok(());
 
-        for msg in Messages::new().window(Some(window.inner())).low(Some(797)).high(Some(797)) {
+        for msg in Messages::new().window(Some(self.window.inner())).low(Some(WM_CLIPBOARDUPDATE)).high(Some(WM_CLIPBOARDUPDATE)) {
             match msg {
-                Ok(_) => {
-                    match self.handler.on_clipboard_change() {
-                        CallbackResult::Next => (),
-                        CallbackResult::Stop => break,
-                        CallbackResult::StopWithError(error) => {
-                            result = Err(error);
+                Ok(msg) => match msg.id() {
+                    WM_CLIPBOARDUPDATE => {
+                        let msg = msg.inner();
+
+                        //Shutdown requested
+                        if msg.lParam == CLOSE_PARAM {
                             break;
                         }
 
-                    }
+                        match self.handler.on_clipboard_change() {
+                            CallbackResult::Next => (),
+                            CallbackResult::Stop => break,
+                            CallbackResult::StopWithError(error) => {
+                                result = Err(error);
+                                break;
+                            }
+                        }
+                    },
+                    _ => panic!("Unexpected message"),
                 },
                 Err(error) => {
                     match self.handler.on_clipboard_error(error) {
