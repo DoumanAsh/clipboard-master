@@ -4,7 +4,7 @@
 //!
 //! ## Example:
 //!
-//! ```rust,no_run
+//! ```rust
 //! extern crate clipboard_master;
 //!
 //! use clipboard_master::{Master, ClipboardHandler, CallbackResult};
@@ -26,7 +26,16 @@
 //! }
 //!
 //! fn main() {
-//!     let _ = Master::new(Handler).expect("create new monitor").run();
+//!     let mut master = Master::new(Handler).expect("create new monitor");
+//!
+//!     let shutdown = master.shutdown_channel();
+//!     std::thread::spawn(move || {
+//!         std::thread::sleep(core::time::Duration::from_secs(1));
+//!         println!("I did some work so time to finish...");
+//!         shutdown.signal();
+//!     });
+//!     //Working until shutdown
+//!     master.run().expect("Success");
 //! }
 //! ```
 
