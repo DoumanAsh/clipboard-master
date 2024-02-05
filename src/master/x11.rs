@@ -1,6 +1,7 @@
 use crate::{CallbackResult, ClipboardHandler};
 
 use std::io;
+use std::sync::OnceLock;
 use std::sync::mpsc::{self, SyncSender, Receiver, sync_channel};
 
 ///Shutdown channel
@@ -54,8 +55,7 @@ impl<H: ClipboardHandler> Master<H> {
 
     ///Starts Master by waiting for any change
     pub fn run(&mut self) -> io::Result<()> {
-        let clipboard = x11_clipboard::Clipboard::new();
-        let clipboard = match clipboard {
+        let clipboard = match Self::x11_clipboard() {
             Ok(clipboard) => clipboard,
             Err(error) => {
                 return Err(io::Error::new(
@@ -107,5 +107,16 @@ impl<H: ClipboardHandler> Master<H> {
         }
 
         Ok(())
+    }
+
+    ///Gets one time initialized x11 clipboard.
+    ///
+    ///This is only available on linux
+    ///
+    ///Prefer to use it on Linux as underlying `x11-clipboard` crate has buggy dtor
+    ///and doesn't clean up all resources associated with `Clipboard`
+    pub fn x11_clipboard() -> &'static Result<x11_clipboard::Clipboard, x11_clipboard::error::Error> {
+        static CLIP: OnceLock<Result<x11_clipboard::Clipboard, x11_clipboard::error::Error>> = OnceLock::new();
+        CLIP.get_or_init(x11_clipboard::Clipboard::new)
     }
 }
