@@ -66,11 +66,10 @@ impl<H: ClipboardHandler> Master<H> {
         };
 
         loop {
-            let res = clipboard.load(
+            let res = clipboard.load_wait(
                 clipboard.getter.atoms.clipboard,
                 clipboard.getter.atoms.incr,
                 clipboard.getter.atoms.property,
-                self.handler.sleep_interval(),
             );
             match res {
                 Ok(_) => {
@@ -82,7 +81,6 @@ impl<H: ClipboardHandler> Master<H> {
                         }
                     }
                 },
-                Err(x11_clipboard::error::Error::Timeout) => (),
                 Err(error) => {
                     let error = io::Error::new(
                         io::ErrorKind::Other,
