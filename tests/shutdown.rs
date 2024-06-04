@@ -5,6 +5,7 @@ pub struct Handler;
 
 impl ClipboardHandler for Handler {
     fn on_clipboard_change(&mut self) -> CallbackResult {
+        println!("CHANGE");
         CallbackResult::Next
     }
 }
