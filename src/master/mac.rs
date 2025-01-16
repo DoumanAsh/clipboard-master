@@ -2,8 +2,8 @@ use std::io;
 use std::sync::mpsc::{self, SyncSender, Receiver, sync_channel};
 use crate::{ClipboardHandler, CallbackResult};
 
-use objc::runtime::{Object, Class};
-use objc_id::Id;
+use objc2::{msg_send_id, rc::Id, ClassType};
+use objc2_app_kit::NSPasteboard;
 
 #[link(name = "AppKit", kind = "framework")]
 extern "C" {}
@@ -58,25 +58,18 @@ impl<H: ClipboardHandler> Master<H> {
 
     ///Starts Master by polling clipboard for change
     pub fn run(&mut self) -> io::Result<()> {
-        use objc::{msg_send, sel, sel_impl};
+        let pasteboard: Option<Id<NSPasteboard>> = unsafe { msg_send_id![NSPasteboard::class(), generalPasteboard] };
 
-        let cls = match Class::get("NSPasteboard") {
-            Some(cls) => cls,
+        let pasteboard = match pasteboard {
+            Some(pasteboard) => pasteboard,
             None => return Err(io::Error::new(io::ErrorKind::Other, "Unable to create mac pasteboard")),
         };
-        let pasteboard: *mut Object = unsafe { msg_send![cls, generalPasteboard] };
 
-        if pasteboard.is_null() {
-            return Err(io::Error::new(io::ErrorKind::Other, "Unable to create mac pasteboard"));
-        }
-
-        let pasteboard: Id<Object> = unsafe { Id::from_ptr(pasteboard) };
-
-        let mut prev_count = unsafe { msg_send![pasteboard, changeCount] };
+        let mut prev_count = unsafe { pasteboard.changeCount() };
         let mut result = Ok(());
 
         loop {
-            let count: isize = unsafe { msg_send![pasteboard, changeCount] };
+            let count: isize = unsafe { pasteboard.changeCount() };
 
             if count == prev_count {
                 match self.recv.recv_timeout(self.handler.sleep_interval()) {
