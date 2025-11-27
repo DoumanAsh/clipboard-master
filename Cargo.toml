@@ -20,8 +20,8 @@ x11-clipboard = "0.9"
 x11rb = { version = "0.13", features = ["xfixes"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2 = { version = "0.5.2" }
-objc2-app-kit = { version = "0.2.2", features = ["NSPasteboard"] }
+objc2 = { version = "0.6" }
+objc2-app-kit = { version = "0.3", features = ["NSPasteboard"] }
 
 [features]
 cargo-clippy = []
