@@ -2,7 +2,7 @@ use std::io;
 use std::sync::mpsc::{self, SyncSender, Receiver, sync_channel};
 use crate::{ClipboardHandler, CallbackResult};
 
-use objc2::{msg_send_id, rc::Id, ClassType};
+use objc2::{msg_send, rc, ClassType};
 use objc2_app_kit::NSPasteboard;
 
 #[link(name = "AppKit", kind = "framework")]
@@ -58,18 +58,18 @@ impl<H: ClipboardHandler> Master<H> {
 
     ///Starts Master by polling clipboard for change
     pub fn run(&mut self) -> io::Result<()> {
-        let pasteboard: Option<Id<NSPasteboard>> = unsafe { msg_send_id![NSPasteboard::class(), generalPasteboard] };
+        let pasteboard: Option<rc::Retained<NSPasteboard>> = unsafe { msg_send![NSPasteboard::class(), generalPasteboard] };
 
         let pasteboard = match pasteboard {
             Some(pasteboard) => pasteboard,
             None => return Err(io::Error::new(io::ErrorKind::Other, "Unable to create mac pasteboard")),
         };
 
-        let mut prev_count = unsafe { pasteboard.changeCount() };
+        let mut prev_count = pasteboard.changeCount();
         let mut result = Ok(());
 
         loop {
-            let count: isize = unsafe { pasteboard.changeCount() };
+            let count: isize = pasteboard.changeCount();
 
             if count == prev_count {
                 match self.recv.recv_timeout(self.handler.sleep_interval()) {
