@@ -2,58 +2,26 @@ name: Rust
 
 on:
   push:
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
     branches:
-      - master
-    paths:
-      - '.github/workflows/rust.yml'
-      - 'src/**.rs'
-      - 'tests/**.rs'
-      - 'Cargo.toml'
+      - 'master'
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    branches:
-      - '**'
-    paths:
-      - '.github/workflows/rust.yml'
-      - 'src/**.rs'
-      - 'tests/**.rs'
-      - 'Cargo.toml'
+    paths-ignore:
+      - 'README.md'
+      - 'LICENSE'
+      - '.gitignore'
 
 jobs:
-  build:
-    runs-on: ${{ matrix.os }}
-
+  check:
     strategy:
       matrix:
         os: [macos-latest, windows-latest, ubuntu-latest]
-
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Install Rust Unix
-      if: runner.os != 'Windows'
-      run: |
-        if rustup --version >/dev/null 2>&1; then
-            rustup update
-        else
-             curl https://sh.rustup.rs -sSf | sh -s -- -y --profile minimal --default-toolchain stable
-             echo ::add-path::$HOME/.cargo/bin
-        fi
-    - name: Install Rust Windows
-      if: runner.os == 'Windows'
-      run: |
-        if (Get-Command "rustup" -ErrorAction SilentlyContinue) {
-            rustup update
-        } else {
-            Invoke-WebRequest https://static.rust-lang.org/rustup/dist/i686-pc-windows-gnu/rustup-init.exe -OutFile rustup-init.exe
-            ./rustup-init.exe -y --profile minimal --default-toolchain stable
-            echo ::add-path::%USERPROFILE%\.cargo\bin
-        }
-
-    - name: Rust version
-      run: |
-        cargo --version
-        rustc --version
-
-    - name: Check
-      run: cargo check
+    if: github.event.pull_request.draft == false
+    uses: DoumanAsh/douman-ci/.github/workflows/rust.yml@master
+    with:
+      runs-on: ${{ matrix.os }}
+      cargo-test-run: false
