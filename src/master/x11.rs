@@ -220,6 +220,8 @@ impl<H: ClipboardHandler> Master<H> {
     ///
     ///Prefer to use it on Linux as underlying `x11-clipboard` crate has buggy dtor
     ///and doesn't clean up all resources associated with `Clipboard`
+    ///
+    ///You should use [load](https://docs.rs/x11-clipboard/latest/x11_clipboard/struct.Clipboard.html#method.load) with no timeout on every callback call
     pub fn x11_clipboard() -> &'static Result<x11_clipboard::Clipboard, x11_clipboard::error::Error> {
         static CLIP: OnceLock<Result<x11_clipboard::Clipboard, x11_clipboard::error::Error>> = OnceLock::new();
         CLIP.get_or_init(x11_clipboard::Clipboard::new)
