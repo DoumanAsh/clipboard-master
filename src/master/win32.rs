@@ -67,10 +67,6 @@ impl Drop for ClipboardListener {
 ///Clipboard master.
 ///
 ///Tracks changes of clipboard and invokes corresponding callbacks.
-///
-///# Platform notes:
-///
-///- On `windows` it creates dummy window that monitors each clipboard change message.
 pub struct Master<H> {
     handler: H,
     window: Window,

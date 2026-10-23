@@ -9,7 +9,7 @@ Clipboard monitoring library.
 ## Supported platforms
 
 - Windows - uses dummy window to receive messages when clipboard changes;
-- Linux - uses [x11_clipboard](https://github.com/quininer/x11-clipboard)
+- Linux - uses [x11_clipboard](https://github.com/quininer/x11-clipboard) and [wl-clipboard-rs](https://crates.io/crates/wl-clipboard-rs)
 - MacOS - uses polling via `NSPasteboard::changeCount` as there is no event notification.
 
 ## Clipboard Master Library

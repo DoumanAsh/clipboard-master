@@ -22,13 +22,9 @@ impl Drop for Shutdown {
     }
 }
 
-///Clipboard master.
+///Clipboard master using x11.
 ///
 ///Tracks changes of clipboard and invokes corresponding callbacks.
-///
-///# Platform notes:
-///
-///- On `windows` it creates dummy window that monitors each clipboard change message.
 pub struct Master<H> {
     handler: H,
     sender: SyncSender<()>,
@@ -56,7 +52,6 @@ impl<H: ClipboardHandler> Master<H> {
         }
     }
 
-
     ///Starts Master by waiting for any change
     pub fn run(&mut self) -> io::Result<()> {
         let clipboard = match Self::x11_clipboard() {
@@ -68,7 +63,6 @@ impl<H: ClipboardHandler> Master<H> {
                 ))
             }
         };
-
 
         if let Err(error) = xfixes::query_version(&clipboard.getter.connection, 5, 0) {
             return Err(io::Error::new(io::ErrorKind::Other, error));
